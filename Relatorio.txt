@@ -1,0 +1,56 @@
+O arquivador vina++ gera um archive que armazena varios arquivos
+ao mesmo tempo.
+A estrutura desse archive é:
+- Um inteiro contendo o numero de arquivos no archive
+- Um off_t contendo a posição do diretorio no archive
+- O conteudo de todos os arquivos
+- Um diretorio, contendo o nome e informações dos arquivos armazenados
+
+O diretorio consiste nas informaçoes dos arquivos concatenadas,
+a informação de cada arquivo segue a seguinte estrutura:
+- Uma string terminada em \0 com o caminho do arquivo
+- Um int com sua posicao no archive
+- Um off_t com sua localização no archive
+- um uid_t com o ID do usuario
+- Um mode_t com as permissoes do arquivo
+- Um size_t com o tamanho do arquivo
+- Um time_t com a data de sua modificacao
+
+A manipulacao do diretorio é feita em memoria, de maneira que ele é carregado para
+um vetor de ponteiros para structs. Essas structs sao do tipo infoArq_t, definido
+em libvpp.h, e armazenam as informações do arquivo citadas acima. O diretorio é
+lido do archive no inicio das funcoes, manipulado, e entao reescrito
+ao final do archive.
+
+As principais funcoes de manipulacao do arquive sao:
+- Inserir
+    Essa funcao insere um novo arquivo ao fim do archive. Para fazer isso,
+    é dado um fseek para o local do diretorio no archive, e entao ele é 
+    sobrescrito com os dados do novo arquivo.    
+
+- Extrair e extrairTodos
+    Aqui, o arquivo é acessado no archive via fseek para a sua localização,
+    e entao seu conteudo é copiado para um novo arquivo.
+
+- Remover
+    Para essa operação, é necessaria a criacão de um archive temporario.
+    Os arquivos localizados antes do removido sao copiados para esse archive 
+    temporario, então é dado um fseek para depois do conteudo do arquivo removido
+    e os demais sao copiados para o archive temporario. Depois disso, o archive original
+    é removido, e então o temporario é renomeado para substituir o archive original.
+
+- InserirApos
+    Nessa função também é utilizado um archive temporario.
+    O arquivo anterior ao inserido é localizado e ele e todos os arquivos 
+    anteriores a ele sao copiados para o temporario. Então o arquivo inserido
+    é escrito no temporario e, após ele, os demais arquivos do archive.
+    Por fim o archive orginal é substituido pelo temporario.
+
+Os demais detalhes da implementação dessas funcoes estão nos comentarios do código.
+
+Alguns problemas da minha implementação do trabalho:
+- Ao extrair um arquivo do archive cuja estrutura de diretorios nao exista, 
+a extracao não é feita.
+- Há um pequeno vazamento de memoria que nao consegui identificar a causa.
+
+
